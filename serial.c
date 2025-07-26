@@ -10,7 +10,6 @@ typedef struct
 {
     uint8_t r, g, b;
     uint16_t laser_x, laser_y, audio_l, audio_r;
-    // uint64_t t;
 } Data;
 
 #define ISR_HZ 40000//50000

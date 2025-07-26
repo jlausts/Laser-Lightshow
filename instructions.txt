@@ -1,7 +1,14 @@
-# start, stop, low, high, phase, hz, target (x, y, r, g, b), wave
+# start, stop, 
+# low, high, 
+# phase, hz, 
+# target ({x, y, r, g, b, o ('o' for rotate)} or {0.[h, l, p]}), 
+# wave, 
+# for rotation: center_x, center_y
 # color is set by the 'low' value. high, phase, wave, and hz is ignored.
 0,120000,0,1000,0,20,x,s
 0,120000,0,1000,3.141,0.166,0.l,c
 0,120000,1000,2000,3.141,1,0.h,c
-120000, 160000, 0, 1000, 0, 5, x, c
+0,120000,0,6.28,0,2,0.p,s
+120000, 160000, 0, 1000, 0, 5.5, x, c
 0, 160000, 20, 0, 0, 0, b, c
+0, 160000, 0, 6, 0, 1, o, c, 500, 500
