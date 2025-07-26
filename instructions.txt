@@ -1,0 +1,7 @@
+# start, stop, low, high, phase, hz, target (x, y, r, g, b), wave
+# color is set by the 'low' value. high, phase, wave, and hz is ignored.
+0,120000,0,1000,0,20,x,s
+0,120000,0,1000,3.141,0.166,0.l,c
+0,120000,1000,2000,3.141,1,0.h,c
+120000, 160000, 0, 1000, 0, 5, x, c
+0, 160000, 20, 0, 0, 0, b, c
