@@ -473,4 +473,5 @@ int main()
     * position color control with angle. 
         make all variables of color control addressable from a pointer from another instruction
     * temporal color control
+    * function type should be the first arg as it tells the number and type of values
 */
