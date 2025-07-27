@@ -469,4 +469,7 @@ int main()
     * determine if a pile of 64 instructions is enough of a buffer for one second.
     * think about other types of function that could be used. the rotatw one was the new addition
     * make the rotate function the very last thing that happens to the x and y position.
+    * make a linear change function
+    * make an absolute value set line for the instructions
+    
 */
