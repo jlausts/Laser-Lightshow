@@ -471,5 +471,6 @@ int main()
     * make the rotate function the very last thing that happens to the x and y position.
     * make a linear change function
     * make an absolute value set line for the instructions
-    
+    * position color control
+    * temporal color control
 */
