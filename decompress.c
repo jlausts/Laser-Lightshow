@@ -467,10 +467,10 @@ int main()
     * install some logic to handle if an instruction is too old to keep around.
     * read for new instruction every second.
     * determine if a pile of 64 instructions is enough of a buffer for one second.
-    * think about other types of function that could be used. the rotatw one was the new addition
     * make the rotate function the very last thing that happens to the x and y position.
     * make a linear change function
-    * make an absolute value set line for the instructions
-    * position color control
+    * make an absolute value instruction
+    * position color control with angle. 
+        make all variables of color control addressable from a pointer from another instruction
     * temporal color control
 */
