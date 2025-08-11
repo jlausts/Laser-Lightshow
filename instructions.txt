@@ -2,7 +2,7 @@
 # low, high, 
 # phase, hz, 
 # target ({x, y, r, g, b, o ('o' for rotate)} or {0.[h, l, p]}), 
-# wave, 
+# wave (s, c, l), 
 # for rotation: center_x, center_y
 # color is set by the 'low' value. high, phase, wave, and hz is ignored.
 0,120000,0,1000,0,20,x,s

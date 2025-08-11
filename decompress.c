@@ -13,7 +13,7 @@
 #define NUM_CYCLES 64
 #define INSTRUCTIONS_FILE "instructions.txt"
 
-enum types {ATTR, POS, COLOR, ROTATE};
+enum types {ATTR, POS, COLOR, ROTATE, POS_COLOR, TIME_COLOR};
 
 
 typedef struct __attribute__((packed))
@@ -47,7 +47,8 @@ typedef struct __attribute__((packed))
 {
     uint8_t r, g, b;
     uint16_t laser_x, laser_y, audio_l, audio_r;
-} LaserBytes;
+} 
+LaserBytes;
 
 char instruction_file[256*256];
 long instructions_len;
@@ -117,6 +118,22 @@ float cosine(const float x_rad)
     {
         // printf("d %d %f %d\n", x - 3 * num, sin_arr[x - 3 * num], x);
         return sin_arr[x - 3 * num];
+    }
+}
+
+float linear(const float x_rad)
+{
+    const long x = ((long) ((x_rad >= 0 ? x_rad : -x_rad) / M_PI * (float)(1<<17))) & ((1<<18) - 1) - 0; 
+    const float x_r = ((float)x / (float)(1<<17)) * M_PI;
+    if (x < (1<<17))
+    {        
+        printf("a %f %f\n", -x_r / M_PI_2 + 1.0f, x_r);
+        return -x_r / M_PI_2 + 1.0f;
+    }
+    else
+    {
+        printf("b %f %f\n", x_r / M_PI_2 - 3.0f, x_r);
+        return x_r / M_PI_2;
     }
 }
 
@@ -276,6 +293,7 @@ void setTargetVariable(Cycle *const cycle, const char *const val)
         cycle->target = (void*)laser.y_pos;
         cycle->target_type = POS;
         break;
+
     case 'r':
         cycle->target = (void*)laser.r;
         cycle->target_type = COLOR;
@@ -288,9 +306,36 @@ void setTargetVariable(Cycle *const cycle, const char *const val)
         cycle->target = (void*)laser.b;
         cycle->target_type = COLOR;
         break;
-    case 'o':
+        
+    case 'o': // rotation
         cycle->target = NULL;
         cycle->target_type = ROTATE;
+        break;
+
+    case 't': // position 'r'
+        cycle->target = (void*)laser.r;
+        cycle->target_type = POS_COLOR;
+        break;
+    case 'h': // position 'g'
+        cycle->target = (void*)laser.g;
+        cycle->target_type = POS_COLOR;
+        break;
+    case 'n': // position 'b'
+        cycle->target = (void*)laser.b;
+        cycle->target_type = POS_COLOR;
+        break;
+
+    case 'e': // time 'r'
+        cycle->target = (void*)laser.r;
+        cycle->target_type = TIME_COLOR;
+        break;
+    case 'f': // time 'g'
+        cycle->target = (void*)laser.g;
+        cycle->target_type = TIME_COLOR;
+        break;
+    case 'v': // time 'b'
+        cycle->target = (void*)laser.b;
+        cycle->target_type = TIME_COLOR;
         break;
         
     default:
@@ -317,15 +362,15 @@ void setTargetVariable(Cycle *const cycle, const char *const val)
         switch (val[char_index])
         {
         case 'h':
-            cycle->target = &cycles[cycle_index].high;
+            cycle->target = &cycles[cycle_index].high; // high
             cycle->target_type = ATTR;
             break;
         case 'l':
-            cycle->target = &cycles[cycle_index].low;
+            cycle->target = &cycles[cycle_index].low; // low
             cycle->target_type = ATTR;
             break;
         case 'p':
-            cycle->target = &cycles[cycle_index].phase;
+            cycle->target = &cycles[cycle_index].phase; // phase
             cycle->target_type = ATTR;
             break;
         }
@@ -368,7 +413,7 @@ void setupOneVariable(int *argc, int *valc, char *val, int *max_time, char info)
         break;
     
     case 7:
-        cycle.wave = (val[0] == 's' ? sine : cosine);
+        cycle.wave = (val[0] == 's' ? sine : (val[0] == 'c' ? cosine : linear));
         break;
     
     case 8:
@@ -444,6 +489,11 @@ void readInstructions(int *max_time, const int current_time)
 
 int main()
 {
+
+    for (float i = 0; i < M_PI * 3; i += M_PI/50)
+        linear(i);
+
+    exit(0);
     int max_time;
     getRawInstructions();
     readInstructions(&max_time, 0);
@@ -463,12 +513,12 @@ int main()
 
 // TODO
 /* 
-    * make an instructions compiler so that they can be read quickly in the form of a struct.
+    * make an instructions compiler so that they can be read quickly in the form of a struct. // Later because the hex address will change.
     * install some logic to handle if an instruction is too old to keep around.
     * read for new instruction every second.
     * determine if a pile of 64 instructions is enough of a buffer for one second.
     * make the rotate function the very last thing that happens to the x and y position.
-    * make a linear change function
+    /////* make a linear change function
     * make an absolute value instruction
     * position color control with angle. 
         make all variables of color control addressable from a pointer from another instruction
