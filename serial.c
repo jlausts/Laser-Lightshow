@@ -9,7 +9,7 @@
 typedef struct 
 {
     uint8_t r, g, b;
-    uint16_t laser_x, laser_y, audio_l, audio_r;
+    uint16_t laser_x, laser_y;
 } Data;
 
 #define ISR_HZ 40000//50000
@@ -18,20 +18,21 @@ enum {XHZ, YHZ, RED, GREEN, BLUE, XOFF, YOFF, ROTATE}TYPES;
 
 HANDLE serial_conn;
 
-void packOLD(const Data *const data_array, uint8_t *const arr, int num_bytes)
+void pack(const Data *const data_array, uint8_t *const arr)
 {
-    
-    for (int i = 0, j = 0; j < num_bytes; ++i, j += 8)
+    for (int i = 0, j = 0; j < 255; ++i, j += 5)
     {
         uint8_t *const packed = &arr[j];
         const Data *const data = &data_array[i];
 
         // rgb: pack to 11 bits (5+6+7 bits, rounded)
-        packed[0]  =  (data->r >> 3) & 0b00011111;       // r 
-        packed[0] |= ((data->g >> 3) & 0b00000111) << 5; // g 
+        packed[0]  =  data->r > 31 ? 31 : data->r;      // r 
 
-        packed[1]  = ((data->g >> 6) & 0b00000011);      // g 
-        packed[1] |= ((data->b >> 1) & 0b01111100);      // b 
+        const uint8_t g = data->g > 31 ? 31 : data->g;  // g
+        packed[0] |= (g & 0b00000111) << 5;             // g
+        packed[1]  =  g >> 3;                           // g
+
+        packed[1] |= (data->b >= 31 ? 0b11111000 : data->b << 3);        // b 
 
         // laser_x (12 bits)
         packed[2] =   data->laser_x;
@@ -40,69 +41,16 @@ void packOLD(const Data *const data_array, uint8_t *const arr, int num_bytes)
         // laser_y (12 bits)
         packed[3] |= (data->laser_y << 4) & 0xF0;
         packed[4]  =  data->laser_y >> 4;
-
-        // audio_l (12 bits)
-        packed[5] =   data->audio_l;
-        packed[6] = ((data->audio_l >> 8) & 0x0F);
-
-        // audio_r (12 bits)
-        packed[6] |= (data->audio_r << 4) & 0xF0;
-        packed[7]  =  data->audio_r >> 4;
-
-        // timestamp: 64-bit little endian
-        // packed[8]  = (uint8_t) data->t;
-        // packed[9]  = (uint8_t)(data->t >> 8);
-        // packed[10] = (uint8_t)(data->t >> 16);
-
-        // packed[11] = (uint8_t)(data->t >> 24);
-        // packed[12] = (uint8_t)(data->t >> 32);
-        // packed[13] = (uint8_t)(data->t >> 40);
-        // packed[14] = (uint8_t)(data->t >> 48);
-        // packed[15] = (uint8_t)(data->t >> 56);
-
-    }
-}
-
-void pack(const Data *const data_array, uint8_t *const arr, int num_bytes)
-{
-    
-    for (int i = 0, j = 0; j < num_bytes; ++i, j += 8)
-    {
-        uint8_t *const packed = &arr[j];
-        const Data *const data = &data_array[i];
-
-        // rgb: pack to 11 bits (5+6+7 bits, rounded)
-        packed[0]  =  (data->r > 31 ? 31 : data->r) & 0b00011111;       // r 
-        packed[0] |= (data->g & 0b00000111) << 5; // g 
-
-        packed[1]  = (((data->g > 31 ? 31 : data->g) >> 3) & 0b00000011);      // g 
-        packed[1] |= ((data->b > 31 ? 31 : data->b) & 0b00011111) << 2;        // b 
-
-        // laser_x (12 bits)
-        packed[2] =   data->laser_x;
-        packed[3] = ((data->laser_x >> 8) & 0x0F);
-
-        // laser_y (12 bits)
-        packed[3] |= (data->laser_y << 4) & 0xF0;
-        packed[4]  =  data->laser_y >> 4;
-
-        // audio_l (12 bits)
-        packed[5] =   data->audio_l;
-        packed[6] = ((data->audio_l >> 8) & 0x0F);
-
-        // audio_r (12 bits)
-        packed[6] |= (data->audio_r << 4) & 0xF0;
-        packed[7]  =  data->audio_r >> 4;
     }
 }
 
 void pack_arr(HANDLE hSerial, const Data *const data_array, uint8_t *const packed)
 {
     DWORD bytesWritten;
-    for (int j = 0; j < 256; j += 32)
+    for (int j = 0; j < 255; j += 51)
     {
-        pack(&data_array[j], packed, 256);
-        WriteFile(hSerial, packed, 256, &bytesWritten, NULL);
+        pack(&data_array[j], packed);
+        WriteFile(hSerial, packed, 255, &bytesWritten, NULL);
     }
 }
 
@@ -253,7 +201,6 @@ void rotate_point(uint16_t *x, uint16_t *y, float angle, float cx, float cy)
     *y = (uint16_t)(y_rot < 0 ? 0 : (y_rot > 4095 ? 4095 : y_rot + 0.5f));
 }
 
-
 void send_to_laser(const int len, const float *const arr, const int *const types, int first_one)
 {
     if (len == 0)
@@ -341,7 +288,7 @@ void send_to_laser(const int len, const float *const arr, const int *const types
     }
     
     pack_arr(serial_conn, data_array, packed);
-    t += 256;
+    t += 255;
 }
 
 // color: 31 - 255

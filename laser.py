@@ -15,7 +15,7 @@ class Laser:
 
     str_to_int = {'X': 0, 'Y': 1, 'R': 2, 'G': 3, 'B': 4, 'XOFF': 5, 'YOFF': 6, 'ROTATE': 7}
 
-    def __init__(self, dll_path: str = r"C:\Users\jlaus\Documents\Programming\Laser Lightshow\laser.dll"):
+    def __init__(self, dll_path: str = f"{os.getcwd()}/laser.dll"):
         if not os.path.exists(dll_path):
             raise FileNotFoundError(f"Cannot find DLL: {dll_path}")
         
@@ -88,7 +88,7 @@ class Laser:
 
     def show(self, arr: list, amp=16, seconds=1, first = True):
         self.send(arr + [['G', amp], ['R', amp], ['B', amp]], first=first)
-        for i in range(round(seconds * 159)):
+        for i in range(round(seconds * 156)):
             self.send(arr + [['G', amp], ['R', amp], ['B', amp]], first=False)
         self.send([['R', 0], ['B', 0], ['G', 0]])
 
