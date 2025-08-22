@@ -489,7 +489,6 @@ void readInstructions(int *max_time, const int current_time)
 
 int main()
 {
-
     for (float i = 0; i < M_PI * 3; i += M_PI/50)
         linear(i);
 
@@ -516,12 +515,12 @@ int main()
     * make an instructions compiler so that they can be read quickly in the form of a struct. // Later because the hex address will change.
     * install some logic to handle if an instruction is too old to keep around.
     * read for new instruction every second.
-    * determine if a pile of 64 instructions is enough of a buffer for one second.
-    * make the rotate function the very last thing that happens to the x and y position.
-    /////* make a linear change function
-    * make an absolute value instruction
+    // * determine if a pile of 64 instructions is enough of a buffer for one second.
+    // * make the rotate function the very last thing that happens to the x and y position.
+    // * make a linear change function
+    * make an absolute value instruction (Raw input, no de-compressable instructions)
+    * temporal color control
     * position color control with angle. 
         make all variables of color control addressable from a pointer from another instruction
-    * temporal color control
     * function type should be the first arg as it tells the number and type of values
 */

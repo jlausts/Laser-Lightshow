@@ -12,14 +12,16 @@ typedef struct
     uint16_t laser_x, laser_y;
 } Data;
 
-#define ISR_HZ 40000//50000
 
-enum {XHZ, YHZ, RED, GREEN, BLUE, XOFF, YOFF, ROTATE}TYPES;
+#define ISR_HZ 40000
+
+enum {XHZ, YHZ, RED, GREEN, BLUE, XOFF, YOFF, ROTATE, COLOR_ANGLE}TYPES;
 
 HANDLE serial_conn;
 
 void pack(const Data *const data_array, uint8_t *const arr)
 {
+    // FILE* fp = fopen("inst", "a");
     for (int i = 0, j = 0; j < 255; ++i, j += 5)
     {
         uint8_t *const packed = &arr[j];
@@ -41,7 +43,10 @@ void pack(const Data *const data_array, uint8_t *const arr)
         // laser_y (12 bits)
         packed[3] |= (data->laser_y << 4) & 0xF0;
         packed[4]  =  data->laser_y >> 4;
+
+        // fprintf(fp, "%d %d\n", data->laser_x, data->laser_y);
     }
+    // fclose(fp);
 }
 
 void pack_arr(HANDLE hSerial, const Data *const data_array, uint8_t *const packed)
@@ -71,11 +76,12 @@ HANDLE setup_serial()
     dcbSerialParams.StopBits = ONESTOPBIT;
     dcbSerialParams.Parity   = NOPARITY;
     SetCommState(hSerial, &dcbSerialParams);
-
+    // FILE* fp = fopen("inst", "w");
+    // fclose(fp);
     return hSerial;
 }
 
-void square(HANDLE hSerial, const int width, int r, int g, int b, int del)
+void square(int r, int g, int b, int delay)
 {
     static Data data_array[256] = {0};
     static uint8_t packed[256] = {0};
@@ -83,66 +89,58 @@ void square(HANDLE hSerial, const int width, int r, int g, int b, int del)
 
     for (int i = 0, j = 0; j < 256; ++i, ++j)
     {
-        for (int d = 0; d < del && i < 256; ++d, ++i)
+        for (int d = 0; d < delay && i < 256; ++d, ++i)
         {
             data_array[i].r = r;
             data_array[i].b = b;
             data_array[i].g = g;
             data_array[i].laser_x = 0;
             data_array[i].laser_y = 0;
-            // data_array[i].audio_l = 0;
-            // data_array[i].audio_r = 0;
         }
         if (i == 256)
         {
-            pack_arr(hSerial, data_array, packed);
+            pack_arr(serial_conn, data_array, packed);
             i = 0;
         }
-        for (int d = 0; d < del && i < 256; ++d, ++i)
+        for (int d = 0; d < delay && i < 256; ++d, ++i)
         {
             data_array[i].r = r;
             data_array[i].b = b;
             data_array[i].g = g;
-            data_array[i].laser_x = width;
+            data_array[i].laser_x = 4095;
             data_array[i].laser_y = 0;
-            // data_array[i].audio_l = 0;
-            // data_array[i].audio_r = 100;
         }
         if (i == 256)
         {
-            pack_arr(hSerial, data_array, packed);
+            pack_arr(serial_conn, data_array, packed);
             i = 0;
         }
         
-        for (int d = 0; d < del && i < 256; ++d, ++i)
+        for (int d = 0; d < delay && i < 256; ++d, ++i)
         {
             data_array[i].r = r;
             data_array[i].b = b;
             data_array[i].g = g;
-            data_array[i].laser_x = width;
-            data_array[i].laser_y = width;
-            // data_array[i].audio_l = 100;
-            // data_array[i].audio_r = 100;
+            data_array[i].laser_x = 4095;
+            data_array[i].laser_y = 4095;
         }
         if (i == 256)
         {
-            pack_arr(hSerial, data_array, packed);
+            pack_arr(serial_conn, data_array, packed);
             i = 0;
         }
         
-        for (int d = 0; d < del && i < 256; ++d, ++i)
+        for (int d = 0; d < delay && i < 256; ++d, ++i)
         {
             data_array[i].r = r;
             data_array[i].b = b;
             data_array[i].g = g;
             data_array[i].laser_x = 0;
-            data_array[i].laser_y = width;
-            // data_array[i].audio_l = 100;
-            // data_array[i].audio_r = 0;
+            data_array[i].laser_y = 4095;
         }
         if (i == 256)
         {
-            pack_arr(hSerial, data_array, packed);
+            pack_arr(serial_conn, data_array, packed);
             i = 0;
         }
     }
@@ -224,7 +222,7 @@ void send_to_laser(const int len, const float *const arr, const int *const types
         {
         case XHZ:
             amp = 4095/2 * arr[i+1];
-            p = 2*  3.1415926 * arr[i] / ISR_HZ;
+            p = 2 * 3.1415926 * arr[i] / ISR_HZ;
             for (int j = 0, k = t; j < 256; ++j, ++k)
                 data_array[j].laser_x += (sinf(k * p) + 1) * amp + 0.5f;
             ++i;
@@ -269,6 +267,9 @@ void send_to_laser(const int len, const float *const arr, const int *const types
             i += 2;
             break;
 
+        case COLOR_ANGLE:
+            break;
+
         default:
             break;
         }
@@ -285,6 +286,13 @@ void send_to_laser(const int len, const float *const arr, const int *const types
             data_array[j].laser_x = 4095;
         else if (data_array[j].laser_x < 0)
             data_array[j].laser_x = 0;
+
+        // if (data_array[j].laser_y > 2048)
+        // {
+            // data_array[j].r = 0;
+            // data_array[j].g = 0;
+            // data_array[j].b = 0;
+        // }
     }
     
     pack_arr(serial_conn, data_array, packed);
@@ -349,3 +357,5 @@ int main(int argc, char **argv)
 
 
 // ./serial r 80 b 60 g 50 x 100 y 33.3
+
+//x86_64-w64-mingw32-gcc serial.c -o laser.dll -shared
